@@ -1,0 +1,7 @@
+*.ccsproject
+*.cmd
+*.cproject
+*.project
+Proximity\ alarm/.settings
+Proximity\ alarm/Debug
+Proximity\ alarm/targetConfigs
