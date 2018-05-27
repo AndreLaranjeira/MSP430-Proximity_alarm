@@ -10,8 +10,6 @@ void main(void) {
 
     InitializePorts();
 
-    UCA0TXBUF = 0x55;
-
     LowPowerMode(3);
 
 }
