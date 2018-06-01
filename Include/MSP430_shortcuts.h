@@ -18,6 +18,7 @@
 #define LowPowerMode(number) (__bis_SR_register(LPM##number##_bits))
 #define ReadPort(port, type, pin) ((port##type) & (BIT##pin))  
 #define SetPort(port, type, pin) ((port##type) |= (BIT##pin))
+#define TimerAConfiguration(clock, mode) (TACLR | (TASSEL__##clock) | (MC_##mode))
 #define TogglePort(port, type, pin) ((port##type) ^= (BIT##pin))
 
 #define TB0_CCR0_INT 59
