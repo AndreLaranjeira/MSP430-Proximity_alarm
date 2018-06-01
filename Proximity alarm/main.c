@@ -29,7 +29,7 @@ void main(void) {
 
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
 	
-    InitializePorts();
+    InitializePorts();	// Avoids energy loss to unitialized ports.
 	
 	/* Port usage:
 		P1.0: LED1,
@@ -63,7 +63,7 @@ void main(void) {
 	
 	__enable_interrupt();
 	
-	// Laço de execução.
+	// Execution loop:
 
     while(1) {
 
@@ -74,10 +74,8 @@ void main(void) {
 				// Nesse estado, o microcontrolador deve esperar o botão S1 ser
 				// apertado para entrar no estado Arming.
 			
-				SetPort(P1, OUT, 0);	// Acende o LED1.
-				ClearPort(P4, OUT, 7);	// Apaga o LED2.
-			
-				// Laço de execução do estado Idle.
+				SetPort(P1, OUT, 0);	// Liga o LED1.
+				ClearPort(P4, OUT, 7);	// Desliga o LED2.
 			
 				while(CurrentState == Idle) {
 					
@@ -91,8 +89,6 @@ void main(void) {
 				// distância e, caso elas estejam dentro de uma margem de erro,
 				// entrar no estado Set. Caso contrário, deve-se entrar no
 				// estado Idle.
-				
-				// Laço de execução do estado Arming.
 			
 				while(CurrentState == Arming) {
 					
@@ -111,10 +107,8 @@ void main(void) {
 				// valor esperado, deve-se entrar no estado Triggered. Caso o
 				// botão S2 seja apertado, deve-se retornar ao estado Idle.
 			
-				ClearPort(P1, OUT, 0);	// Apaga o LED1.
-				SetPort(P4, OUT, 7);	// Acende o LED2.
-				
-				// Laço de execução do estado Set.
+				ClearPort(P1, OUT, 0);	// Desliga o LED1.
+				SetPort(P4, OUT, 7);	// Liga o LED2.
 			
 				while(CurrentState == Set) {
 					
@@ -129,8 +123,6 @@ void main(void) {
 				// acender o LED1 e o LED2 alternadamente. Quando o botão S2
 				// for apertado, deve-se ir para o estado Idle.
 				
-				// Laço de execução do estado Triggered.
-			
 				while(CurrentState == Triggered) {
 					
 				}
