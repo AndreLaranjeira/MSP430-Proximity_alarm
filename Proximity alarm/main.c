@@ -1,5 +1,9 @@
 #include <msp430.h>
+#include <stdint.h>
 #include "../Include/MSP430_shortcuts.h"
+
+// Macros:
+#define PROX_SENSOR_CONSTANT 58
 
 // Enumerations:
 typedef enum{
@@ -9,12 +13,17 @@ typedef enum{
 	Triggered
 } State;
 
+// Function headers:
+void MeasureDistance(void);
+
 // Global variables:
-unsigned int S1_q = 0, S2_q = 0;
+uint8_t S1_q = 0, S2_q = 0, good_read = 0;
+uint16_t distance = 0, start = 0, end = 0;
 
 // Main function:
 void main(void) {
 
+	// Local variable declarations:
 	State CurrentState = Idle;
 	unsigned int i;
 
@@ -22,15 +31,37 @@ void main(void) {
 	
     InitializePorts();
 	
-	// Configuração dos botões.
+	/* Port usage:
+		P1.0: LED1,
+		P1.1: S2,
+		P1.2: Proximity sensor trigger,
+		P2.0 (TA1.1): Proximity sensor echo,
+		P2.1: S1,
+		P4.7: LED2	
+	*/
+	
+	// Switch configuration:
 	
     ConfigS1();
     ConfigS2();
 	
-	// Configuração dos LEDs.
+	// LED configuration:
 	
     ConfigLED1();
     ConfigLED2();
+	
+	// Proximity sensor configuration:
+	
+	SetPort(P1, DIR, 2);
+    ClearPort(P1, OUT, 2);
+
+    ClearPort(P2, DIR, 0);
+    SetPort(P2, SEL, 0);
+
+    TA1CCTL1 = CaptureMode(3);
+    TA1CTL = TimerAConfiguration(SMCLK, 2);
+	
+	__enable_interrupt();
 	
 	// Laço de execução.
 
@@ -112,4 +143,42 @@ void main(void) {
 
 }
 
+// Function implementations:
+void MeasureDistance(void) {
+	SetPort(P1, OUT, 2);
+    ClearPort(P1, OUT, 2);
+}
+
 // ISRs:
+#pragma vector = TA1_CCRN_INT
+__interrupt void TA1_CCRN_ISR() {
+
+    switch(TA1IV) {
+
+		// Proximity sensor echo interruption:
+	
+        case 0x02:
+
+			// Measurement started.
+		
+            if((TA1CCTL1 & CCI) == CCI) {
+                start = TA1CCR1;
+                good_read = 1;
+
+            }
+			
+			// Measurement ended.
+
+            if((TA1CCTL1 & CCI) == 0) {
+                if(good_read == 1) {
+                    end = TA1CCR1;
+                    distance = (end - start)/(PROX_SENSOR_CONSTANT);
+					good_read = 0;
+                }
+            }
+
+        break;
+
+    }
+
+}
