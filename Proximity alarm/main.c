@@ -171,7 +171,9 @@ void main(void) {
 					CurrentState = Idle;
 					while(ComparePortEQ(P1, IN, 1, 0));
 					Debounce();
-				}				
+				}
+				
+				TA0CCTL0 &= ~CCIE;
 				
 				break;
 			
