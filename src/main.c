@@ -52,6 +52,10 @@ void main(void) {
 	
 		ConfigLED1();
 		ConfigLED2();
+		
+	// Bluetooth configuration
+	
+		ConfigUART();
 	
 	// Proximity sensor configuration:
 	
@@ -101,6 +105,7 @@ void main(void) {
 					while(MEASURE_BUSY);
 					measures[i] = distance;
 					average += distance;
+					// Poderíamos adicionar um delay entre as medidas
 				}
 				
 				average /= 3;
@@ -163,6 +168,8 @@ void main(void) {
 				TA0CTL |= MC_2;
 				
 				// Enviar notificação e ligar o buzzer
+				
+				UARTSendString("Alerta!");
 				
 				// Volta ao Idle
 				
@@ -238,4 +245,14 @@ __interrupt void TA0_CCR0_ISR(){
       TogglePort(P1, OUT, 0);
       TogglePort(P4, OUT, 7);
       TA0CCTL0 &= ~CCIFG;
+}
+
+
+#pragma vector=USCI_A0_VECTOR
+__interrupt void RX_ISR(){
+    switch(UCA0IV){
+        case 0x02: // RX
+            // Podia ter comandos via bluetooth, como desligar o alarme
+        break;
+    }
 }
