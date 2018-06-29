@@ -30,9 +30,9 @@ void main(void) {
 	State CurrentState = Idle;
 	uint16_t i, measures[3], average, relativeError;
 
-		WDTCTL = WDTPW | WDTHOLD;	 // stop watchdog timer
+	WDTCTL = WDTPW | WDTHOLD;	 // stop watchdog timer
 	
-		InitializePorts();	// Avoids energy loss to unitialized ports.
+	InitializePorts();	// Avoids energy loss to unitialized ports.
 	
 	/* Port usage:
 		P1.0: LED1,
@@ -186,7 +186,7 @@ void main(void) {
 // Function implementations:
 void MeasureDistance(void) {
 	SetPort(P1, OUT, 2);
-	// We could put a delay, but not necessary as we tested
+	DelayMicrosseconds(12);
 	ClearPort(P1, OUT, 2);
 	MEASURE_BUSY = 1;
 }
