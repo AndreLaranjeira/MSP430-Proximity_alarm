@@ -4,7 +4,8 @@
 #include "../Include/MSP430_shortcuts.h"
 
 // Macros:
-#define PROX_SENSOR_CONSTANT 58
+#define ERROR_VALUE 175
+#define MEASUREMENT_NUM 4
 
 // Enumerations:
 typedef enum{
@@ -15,20 +16,19 @@ typedef enum{
 } State;
 
 // Function headers:
+uint8_t AcceptableDistance(uint16_t, uint16_t);
 void MeasureDistance(void);
-uint16_t RelativeError(uint16_t, uint16_t);
 
 // Global variables:
-uint8_t S1_q = 0, S2_q = 0, good_read = 0;
+uint8_t good_read = 0, MEASURE_BUSY = 0, ARMING_FAILED = 0;
 uint16_t distance = 0, start = 0, end = 0;
-uint8_t MEASURE_BUSY = 0;
 
 // Main function:
 void main(void) {
 
 	// Local variable declarations:
 	State CurrentState = Idle;
-	uint16_t i, measures[3], average, relativeError;
+	uint16_t i, measures[MEASUREMENT_NUM], average;
 
 	WDTCTL = WDTPW | WDTHOLD;	 // stop watchdog timer
 	
@@ -64,6 +64,8 @@ void main(void) {
 		TA1CCTL1 = CaptureMode(3);
 		TA1CTL = TimerAConfiguration(SMCLK, 2);
 	
+	// Enable interruptions:
+
 		__enable_interrupt();
 	
 	// Execution loop:
@@ -95,32 +97,40 @@ void main(void) {
 				// distância e, caso elas estejam dentro de uma margem de erro,
 				// entrar no estado Set. Caso contrário, deve-se entrar no
 				// estado Idle.
+
+                SetPort(P1, OUT, 0);    // Liga o LED1.
+                SetPort(P4, OUT, 7);  // Liga o LED2.
 			
-				for(i=0,average=0;i<3;i++) {
+			    average = 0;
+			    ARMING_FAILED = 0;
+
+				for(i=0; i<MEASUREMENT_NUM; i++) {
 					MeasureDistance();
 					while(MEASURE_BUSY);
 					measures[i] = distance;
 					average += distance;
+					DelaySeconds(1);
 				}
 				
-				average /= 3;
+				average >>= 2;
 				
-				// Verifica se algum dos erros percentuais com relação à média
-				// é maior que 5%
+				// Verifica se alguma das medições está fora da margem de erro.
 				
-				for(i=0;i<3;i++) {
-					// Essa conta é muito complicada?
-					if(RelativeError(average, measures[i]) > 5){
-						CurrentState = Idle;
+				for(i=0; i<MEASUREMENT_NUM; i++) {
+
+					if(!AcceptableDistance(average, measures[i])){
+					    ARMING_FAILED = 1;
 						break;
 					}
+
 				}
 				
-				if(CurrentState == Idle) break;
+				if(ARMING_FAILED == 0)
+				    CurrentState = Set;
 				
-				CurrentState = Set;
-				
-				
+				else
+				    CurrentState = Idle;
+
 				break;
 				
 			case Set:
@@ -132,21 +142,30 @@ void main(void) {
 			
 				ClearPort(P1, OUT, 0);	// Desliga o LED1.
 				SetPort(P4, OUT, 7);	// Liga o LED2.
+
+				DelaySeconds(1);
+
+				while(CurrentState == Set) {
+
+				    if(ComparePortEQ(P1, IN, 1, 0)){
+				        Debounce();
+				        CurrentState = Idle;
+				        while(ComparePortEQ(P1, IN, 1, 0));
+				        Debounce();
+				    }
+
+				    else {
+			
+				        MeasureDistance();
+				        while(MEASURE_BUSY);
 				
-				if(ComparePortEQ(P1, IN, 1, 0)){
-					Debounce();
-					CurrentState = Idle;
-					while(ComparePortEQ(P1, IN, 1, 0));
-					Debounce();
-					break;
+				        if(!AcceptableDistance(average, distance))
+				            CurrentState = Triggered;
+			
+				    }
+
 				}
-			
-				MeasureDistance();
-				while(MEASURE_BUSY);
-				
-				if(RelativeError(average, distance) > 5) 
-					CurrentState = Triggered;
-			
+
 				break;
 				
 			case Triggered:
@@ -157,27 +176,28 @@ void main(void) {
 				// for apertado, deve-se ir para o estado Idle.
 				
 				
-				TA0CTL = TACLR | TASSEL__ACLK | MC_0;
-				TA0CCR0 = 32768; // 1s
+				TA0CTL = TimerAConfiguration(ACLK, 3);
+				TA0CCR0 = 8191; // 0.25s
 				TA0CCTL0 |= CCIE;				
-				TA0CTL |= MC_2;
 				
 				// Enviar notificação e ligar o buzzer
 				
-				// Volta ao Idle
+				// Espera o botão ser apertado.
 				
-				while(ComparePortEQ(P1, IN, 1, 0)){
-					Debounce();
-					CurrentState = Idle;
-					while(ComparePortEQ(P1, IN, 1, 0));
-					Debounce();
-				}
+				while(ComparePortNE(P1, IN, 1, 0));
+
+				// Retorna para o estado original.
+
+				Debounce();
+				CurrentState = Idle;
+				while(ComparePortEQ(P1, IN, 1, 0));
+				Debounce();
 				
 				TA0CCTL0 &= ~CCIE;
 				
 				break;
 			
-		}
+		    }
 
 		}
 
@@ -191,8 +211,13 @@ void MeasureDistance(void) {
 	MEASURE_BUSY = 1;
 }
 
-uint16_t RelativeError(uint16_t average, uint16_t distance){
-	return 100*abs(average-distance)/average;
+uint8_t AcceptableDistance(uint16_t average, uint16_t distance) {
+
+    if(abs(average - distance) < ERROR_VALUE)
+        return 1;
+
+    return 0;
+
 }
 
 // ISRs:
@@ -218,7 +243,7 @@ __interrupt void TA1_CCRN_ISR() {
 						if((TA1CCTL1 & CCI) == 0) {
 								if(good_read == 1) {
 										end = TA1CCR1;
-										distance = (end - start)/(PROX_SENSOR_CONSTANT);
+										distance = (end - start);
 										good_read = 0;
 										MEASURE_BUSY = 0;
 								}
