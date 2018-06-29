@@ -110,7 +110,7 @@ void ConfigureTriggered(){
 	ClearPort(P2, IE, 1); // No interruption for S1
 	ClearPort(P1, IE, 1); // No interruption for S2
 	
-	TA0CTL = TimerAConfiguration(ACLK, 2);
+	TA0CTL = TimerAConfiguration(ACLK, 1);
 	TA0CCR0 = 32768; // 1s
 	TA0CCTL0 |= CCIE;
 	
