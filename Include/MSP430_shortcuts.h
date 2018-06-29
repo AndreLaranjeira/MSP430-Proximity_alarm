@@ -1,4 +1,4 @@
- // MSP430 shortcuts module - Header file.
+// MSP430 shortcuts module - Header file.
 
 // Define guard:
 #ifndef MSP430_SHORTCUTS_H_
