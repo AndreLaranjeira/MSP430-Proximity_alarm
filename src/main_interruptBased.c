@@ -23,6 +23,9 @@ int main(void) {
 	ConfigureIdle();
 	__enable_interrupt();
 	
+	__bis_SR_register(LPM4_bits);
+	
+	
 	return 0;
 }
 

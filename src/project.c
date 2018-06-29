@@ -44,7 +44,7 @@ void SaveMeasure(uint16_t distance){ // ASSERTIVA: counter adequado
 
 uint8_t AcceptableMeasures(){
 	uint16_t i;
-	average >>= 2;
+	average >>= 3;
 	for(i=0; i<MEASURE_SIZE; i++){
 		if(abs(measures[i]-average) > ACCEPTABLE_ABSOLUTE_ERROR)
 			return 0;
@@ -88,17 +88,12 @@ void ConfigureArming(){
 	counter = 0;
 	average = 0;
 	
-	// Interruption for LEDs
+	// Interruption for LEDs and samples
 	TA0CTL = TimerAConfiguration(ACLK, 1);
-	TA0CCR0 = 32767; // 1s
-	TA0CCR1 = 24575; // 0.75s
+	TA0CCR0 = SAMPLE_PERIOD_ARMING; // 1s
+	TA0CCR1 = SAMPLE_PERIOD_ARMING*0.75; // 0.75s
 	TA0CCTL0 |= CCIE;
 	TA0CCTL1 |= CCIE;
-	
-	// Interruption for samples
-	TA2CTL = TimerAConfiguration(ACLK, 1);
-	TA2CCR0 = SAMPLE_PERIOD_ARMING;
-	TA2CCTL0 |= CCIE;
 }
 
 void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK

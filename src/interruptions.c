@@ -48,6 +48,7 @@ __interrupt void TA0_CCRN_ISR(){
 		case 0x02:
 			ClearPort(P1, OUT, 0);
 			ClearPort(P4, OUT, 7);
+			SendTrigger();
 	}
 }
 
