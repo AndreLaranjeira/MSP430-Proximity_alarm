@@ -28,7 +28,7 @@ void ConfigProxSensor(){
 }
 
 void ConfigBuzzer(){
-	SetPort(P7, OUT, 0);
+	SetPort(P8, OUT, 2);
 }
 
 void SendTrigger(void) {
@@ -63,10 +63,12 @@ void ConfigureIdle(){
 	
 	SetPort(P1, OUT, 0); // LED1 ON
 	ClearPort(P4, OUT, 7); // LED2 OFF
-	SetPort(P7, OUT, 0); // Buzzer OFF
+	SetPort(P8, OUT, 2); // Buzzer OFF
 	
 	InterruptEnableS1();
 	InterruptDisableS2();
+	
+	UARTM0SendString("IDLE\n");
 	
 	TA0CCTL0 &= ~CCIE;	
 	TA0CCTL1 &= ~CCIE;
@@ -79,7 +81,7 @@ void ConfigureArming(){
 	
 	SetPort(P1, OUT, 0); // LED1 ON
 	SetPort(P4, OUT, 7); // LED2 ON
-	SetPort(P7, OUT, 0); // Buzzer OFF
+	SetPort(P8, OUT, 2); // Buzzer OFF
 	
 	InterruptDisableS1();
 	InterruptDisableS2();
@@ -87,6 +89,8 @@ void ConfigureArming(){
 	// Send first trigger
 	counter = 0;
 	average = 0;
+	
+	UARTM0SendString("ARMING\n");
 	
 	// Interruption for LEDs and samples
 	TA0CTL = TimerAConfiguration(ACLK, 1);
@@ -101,10 +105,12 @@ void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
 	
 	ClearPort(P1, OUT, 0); // LED1 OFF
 	SetPort(P4, OUT, 7); // LED2 ON
-	SetPort(P7, OUT, 0); // Buzzer OFF
+	SetPort(P8, OUT, 2); // Buzzer OFF
 	
 	InterruptDisableS1();
 	InterruptEnableS2();
+	
+	UARTM0SendString("SET\n");
 	
 	TA0CCTL0 &= ~CCIE;
 	TA0CCTL1 &= ~CCIE;
@@ -132,6 +138,6 @@ void ConfigureTriggered(){
 	TA0CCR0 = 8191; // 1s
 	TA0CCTL0 |= CCIE;
 	
-	//UARTSendString("Alerta!");
+	UARTM0SendString("ALERTA!!!!\n");
 	
 }

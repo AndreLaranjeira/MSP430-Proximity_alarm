@@ -33,7 +33,7 @@ __interrupt void TA0_CCR0_ISR(){
 	if(GetState() == Triggered){
 		TogglePort(P1, OUT, 0);
 		TogglePort(P4, OUT, 7);
-		TogglePort(P7, OUT, 0);
+		TogglePort(P8, OUT, 2);
   }
   else if(GetState() == Arming){
 		SetPort(P1, OUT, 0);

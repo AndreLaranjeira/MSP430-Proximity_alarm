@@ -509,7 +509,7 @@ int LCDM0UpdatePositions(uint8_t left, uint8_t right, uint8_t down, uint8_t up) 
 	
 }
 
-void ConfigUART(){ // 9600 Baud Rate
+void ConfigUARTModule0(){ // 9600 Baud Rate
 
 	P3DIR |= BIT3;  // P3.3 TX
 	P3DIR &= ~BIT4; // P3.4 RX
@@ -526,13 +526,21 @@ void ConfigUART(){ // 9600 Baud Rate
 
 	UCA0CTL1 &= ~UCSWRST;
 
-	UCA0IE = UCRXIE;
+	//UCA0IE = UCRXIE;
   
 }
 
-void UARTSendString(char *data){
+void UARTM0SendString(char *data){
 	while(*data){
-		UCA0TXBUF = *(data++);
+		UCA0TXBUF = *(data++) & 0x7f;
     while(UCA0STAT & UCBUSY);		
 	}
+}
+
+void ConfigBT(){
+	ConfigUARTModule0();
+/*	UARTSendString("AT+ORGL");*/
+/*	UARTSendString("AT+RMAAD");*/
+/*	UARTSendString("AT+ROLE=0");*/
+/*	UARTSendString("AT+ADDR");*/
 }

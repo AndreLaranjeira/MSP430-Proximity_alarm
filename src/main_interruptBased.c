@@ -13,9 +13,9 @@ int main(void) {
 	ConfigS2();
 	ConfigLED1();
 	ConfigLED2();
-	ConfigUART();
 	ConfigProxSensor();
 	ConfigBuzzer();
+	ConfigBT();
 	
 	__bic_SR_register(CPUOFF);
 	
@@ -23,7 +23,7 @@ int main(void) {
 	ConfigureIdle();
 	__enable_interrupt();
 	
-	__bis_SR_register(LPM4_bits);
+	//__bis_SR_register(LPM4_bits);
 	
 	
 	return 0;

@@ -89,7 +89,8 @@ int LCDM0SendByte(uint8_t, uint8_t, uint8_t, uint16_t);
 int LCDM0SendNibble(uint8_t, uint8_t, uint8_t);
 int LCDM0Start4BitMode(uint16_t);
 int LCDM0UpdatePositions(uint8_t, uint8_t, uint8_t, uint8_t);
-void ConfigUART();
-void UARTSendString(char *);
+void ConfigUARTModule0();
+void UARTM0SendString(char *);
+void ConfigBT();
 
 #endif // MSP430_SHORTCUTS_H_
