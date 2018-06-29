@@ -57,7 +57,7 @@ __interrupt void TA1_CCRN_ISR() {
 			if((TA1CCTL1 & CCI) == 0) {
 				if(good_read == 1) {
 					end = TA1CCR1;
-					distance = (end-start)/(PROX_SENSOR_CONSTANT);
+					distance = (end-start);
 					good_read = 0;
 					
 					// Arming

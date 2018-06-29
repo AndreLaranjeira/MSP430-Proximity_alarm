@@ -6,10 +6,6 @@
 static State currentState = Idle;
 static uint16_t measures[MEASURE_SIZE], average, counter = 0;
 
-void SetState(State state){
-	currentState = state;
-}
-
 State GetState(){
 	return currentState;
 }
@@ -46,7 +42,7 @@ uint8_t AcceptableMeasures(){
 	uint16_t i;
 	average >>= 4;
 	for(i=0; i<MEASURE_SIZE; i++){
-		if(100*abs(average-measures[i])/average > ACCEPTABLE_RELATIVE_ERROR)
+		if(abs(measures[i]-average) > ACCEPTABLE_ABSOLUTE_ERROR)
 			return 0;
 	}
 	return 1;
@@ -54,13 +50,13 @@ uint8_t AcceptableMeasures(){
 
 uint8_t AcceptableDistance(uint16_t distance){ // ASSERTIVA: average já foi dividido por 4
 	uint16_t i;
-	if(100*abs(average-distance)/average > ACCEPTABLE_RELATIVE_ERROR)
+	if(abs(distance-average) > ACCEPTABLE_ABSOLUTE_ERROR)
 			return 0;
 	return 1;
 }
 
 void ConfigureIdle(){
-	SetState(Idle);
+	currentState = Idle;
 	
 	SetPort(P1, OUT, 0); // LED1 ON
 	ClearPort(P4, OUT, 7); // LED2 OFF
@@ -74,10 +70,10 @@ void ConfigureIdle(){
 }
 
 void ConfigureArming(){
-	SetState(Arming);
+	currentState = Arming;
 	
 	SetPort(P1, OUT, 0); // LED1 ON
-	ClearPort(P4, OUT, 7); // LED2 OFF
+	SetPort(P4, OUT, 7); // LED2 ON
 	ClearPort(P2, IE, 1); // No interruption for S1
 	ClearPort(P1, IE, 1); // No interruption for S2
 	TA0CCTL0 &= ~CCIE;
@@ -92,7 +88,7 @@ void ConfigureArming(){
 }
 
 void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
-	SetState(Set);
+	currentState = Set;
 	
 	ClearPort(P1, OUT, 0); // LED1 OFF
 	SetPort(P4, OUT, 7); // LED2 ON
@@ -107,7 +103,7 @@ void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
 }
 
 void ConfigureTriggered(){
-	SetState(Triggered);
+	currentState = Triggered;
 	
 	ClearPort(P1, OUT, 0); // LED1 OFF
 	SetPort(P4, OUT, 7); // LED2 ON

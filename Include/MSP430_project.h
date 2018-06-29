@@ -9,6 +9,7 @@
 #define PROX_SENSOR_CONSTANT 58
 #define MEASURE_SIZE 4
 #define ACCEPTABLE_RELATIVE_ERROR 5
+#define ACCEPTABLE_ABSOLUTE_ERROR 116 // PROX_SENSOR_CONSTANT*2 = 2cm
 #define SAMPLE_PERIOD 30 // In us
 
 typedef enum {
@@ -18,7 +19,6 @@ typedef enum {
 	Triggered
 } State;
 
-void SetState(State);
 State GetState();
 void ConfigProxSensor();
 void SendTrigger();
