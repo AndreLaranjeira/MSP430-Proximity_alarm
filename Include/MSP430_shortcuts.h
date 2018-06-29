@@ -1,5 +1,6 @@
  // MSP430 shortcuts module - Header file.
 
+
 // Define guard:
 #ifndef MSP430_SHORTCUTS_H_
 #define MSP430_SHORTCUTS_H_
@@ -10,6 +11,8 @@
 #include <stdint.h>
 
 // Macros:
+#define I2C_READ 0x00
+#define I2C_WRITE UCTR
 #define LCD_BL_ON 0x08
 #define LCD_BL_OFF 0x00
 #define LCD_DATA 0x01
@@ -64,11 +67,15 @@ int ConfigS1(void);
 int ConfigS2(void);
 int Debounce(void);
 int DelayMicrosseconds(uint16_t);
+int Delay40Microsseconds(uint16_t);
+int DelaySeconds(uint8_t);
 int InitializePorts(void);
 int InterruptDisableS1(void);
 int InterruptDisableS2(void);
 int InterruptEnableS1(void);
 int InterruptEnableS2(void);
+uint8_t I2CM0ReceiveData(void);
+int I2CM0RestartTransmission(uint8_t, uint8_t);
 int I2CM0SendData(uint8_t, uint16_t);
 int I2CM0StartTransmission(uint8_t);
 int I2CM0StopTransmission(void);
@@ -80,8 +87,7 @@ int LCDM0SendByte(uint8_t, uint8_t, uint8_t, uint16_t);
 int LCDM0SendNibble(uint8_t, uint8_t, uint8_t);
 int LCDM0Start4BitMode(uint16_t);
 int LCDM0UpdatePositions(uint8_t, uint8_t, uint8_t, uint8_t);
-int WaitHalfSecond(void);
-int Wait1Second(void);
-int Wait2Seconds(void);
+void ConfigUART();
+void UARTSendString(char *);
 
 #endif // MSP430_SHORTCUTS_H_

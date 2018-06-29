@@ -1,6 +1,8 @@
 #include <msp430.h>
 #include "../Include/MSP430_shortcuts.h"
 
+
+// Functions:
 int ConfigI2CMaster0(uint8_t ADDR, uint8_t clock, uint8_t BR0, uint8_t BR1) {
 	
 	UCB0CTL1 = UCSWRST;     // Put USCI-B0 in configuration mode.
@@ -182,6 +184,39 @@ int DelayMicrosseconds(uint16_t number) {
 	
 }
 
+int Delay40Microsseconds(uint16_t number) {
+	
+	TA2EX0 = 4;											// Divide clock by 5.
+	TA2CTL = (TimerAConfiguration(SMCLK, 2) | ID_3);	// Divide clock by 8.
+	
+	while(TA2R <= number);
+	
+	TA2EX0 = 0;
+	
+	return 0;
+	
+}
+
+int DelaySeconds(uint8_t number) {
+	
+	TA2EX0 = 7;											// Divide clock by 8. 
+	TA2CTL = (TimerAConfiguration(ACLK, 2) | ID_3);		// Divide clock by 8 again.
+	
+	if(number <= 127)
+		while(TA2R <= (number << 9));
+
+	else {
+		while(TA2R == 0);						// Make sure the timer has started once.
+		while(TA2R != 0);						// Approximately 128 seconds (One full timer loop).
+		while(TA2R <= ((number & 0x7F) << 9));	// Wait for the remaining seconds.
+	}
+	
+	TA2EX0 = 0;	
+	
+	return 0;
+	
+}
+
 int InitializePorts(void) {
 
 	// Removes warnings of uninitialized ports.
@@ -253,6 +288,46 @@ int InterruptEnableS2(void) {
 
     return 0;
 
+}
+
+uint8_t I2CM0ReceiveData(void) {
+	
+	uint8_t data;
+	
+	while((UCB0IFG & UCRXIFG) == 0);
+	data = UCB0RXBUF;
+	
+	return data;
+	
+}
+
+/* uint8_t I2CM0ReceiveDataAndStop(void) {
+	
+	uint8_t data;
+	
+	while((UCB0IFG & UCRXIFG) == 0);
+	
+	UCB0CTL1 |= UCTXSTP;
+    while((UCB0CTL1 & UCTXSTP) != 0);
+	
+	data = UCB0RXBUF;
+	
+	return data;
+	
+} */
+
+int I2CM0RestartTransmission(uint8_t ADDR, uint8_t MODE) {
+	
+	UCB0CTL1 &= ~UCTR;
+	
+	UCB0I2CSA = ADDR;
+
+    while((UCB0STAT & UCBBUSY) != 0);
+
+    UCB0CTL1 |= (MODE | UCTXSTT);
+	
+	return 0;
+	
 }
 
 int I2CM0SendData(uint8_t data, uint16_t delay) {
@@ -431,35 +506,6 @@ int LCDM0UpdatePositions(uint8_t left, uint8_t right, uint8_t down, uint8_t up) 
 		LCDM0SendByte(LCD_SPACE, LCD_BL_ON, LCD_DATA, LCD_WAIT2);	// Write the spaces of the up bar.
 	
 	return 0;
-	
-}
-
-int WaitHalfSecond(void) {
-
-    volatile uint32_t counter = 29250;
-
-    while(counter != 0)
-        counter--;
-
-    return 0;
-
-}
-
-int Wait1Second(void) {
-	
-	WaitHalfSecond();
-	WaitHalfSecond();
-
-    return 0;
-	
-}
-
-int Wait2Seconds(void) {
-	
-	Wait1Second();
-	Wait1Second();
-	
-    return 0;
 	
 }
 

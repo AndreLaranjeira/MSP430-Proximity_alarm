@@ -63,9 +63,8 @@ __interrupt void TA1_CCRN_ISR() {
 					// Arming
 					if(GetState() == Arming){
 						// Get samples
-						if(GetMeasureCounter() < MEASURE_SIZE){
+						if(GetMeasureCounter() < MEASURE_SIZE) {
 							SaveMeasure(distance);
-							SendTrigger();
 						}
 						// Verify relative error
 						else {
@@ -83,10 +82,13 @@ __interrupt void TA1_CCRN_ISR() {
 				}
 			}
 		
-		// Send trigger
-		case 0x04:
-			SendTrigger();
-		
 		break;
 	}
+}
+
+/* TA2 */
+#pragma vector=TIMER2_A0_VECTOR
+__interrupt void TA2_CCR0_ISR(){
+	SendTrigger();
+	TA2CCTL0 &= ~CCIFG;
 }

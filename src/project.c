@@ -63,7 +63,7 @@ void ConfigureIdle(){
 	SetPort(P2, IE, 1); // Enable interruption for S1
 	ClearPort(P1, IE, 1); // No interruption for S2
 	TA0CCTL0 &= ~CCIE;	
-	TA1CCTL2 &= ~CCIE;
+	TA2CCTL0 &= ~CCIE;
 	
 	LowPowerMode(4);
 	
@@ -77,12 +77,14 @@ void ConfigureArming(){
 	ClearPort(P2, IE, 1); // No interruption for S1
 	ClearPort(P1, IE, 1); // No interruption for S2
 	TA0CCTL0 &= ~CCIE;
-	TA1CCTL2 &= ~CCIE;
 	
 	// Send first trigger
 	counter = 0;
 	average = 0;
-	SendTrigger();
+	
+	TA2CTL = TimerAConfiguration(SMCLK, 1);
+	TA2CCR0 = SAMPLE_PERIOD;
+	TA2CCTL0 |= CCIE;
 	
 	LowPowerMode(1);
 }
@@ -96,8 +98,9 @@ void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
 	SetPort(P1, IE, 1); // Interruption for S2
 	TA0CCTL0 &= ~CCIE;
 	
-	TA1CCR2 = SAMPLE_PERIOD;
-	TA1CCTL2 = CCIE;
+	TA2CTL = TimerAConfiguration(SMCLK, 1);
+	TA2CCR0 = SAMPLE_PERIOD;
+	TA2CCTL0 |= CCIE;
 	
 	LowPowerMode(1);
 }
@@ -109,6 +112,7 @@ void ConfigureTriggered(){
 	SetPort(P4, OUT, 7); // LED2 ON
 	ClearPort(P2, IE, 1); // No interruption for S1
 	ClearPort(P1, IE, 1); // No interruption for S2
+	TA2CCTL0 &= ~CCIE;
 	
 	TA0CTL = TimerAConfiguration(ACLK, 1);
 	TA0CCR0 = 32768; // 1s
