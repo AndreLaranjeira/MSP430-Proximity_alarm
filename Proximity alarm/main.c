@@ -4,7 +4,7 @@
 #include "../Include/MSP430_shortcuts.h"
 
 // Macros:
-#define ERROR_VALUE 175
+#define ERROR_VALUE 100
 #define MEASUREMENT_NUM 4
 
 // Enumerations:
@@ -159,6 +159,8 @@ void main(void) {
 				        MeasureDistance();
 				        while(MEASURE_BUSY);
 				
+				        DelayMicrosseconds(1000);
+
 				        if(!AcceptableDistance(average, distance))
 				            CurrentState = Triggered;
 			
@@ -176,7 +178,7 @@ void main(void) {
 				// for apertado, deve-se ir para o estado Idle.
 				
 				
-				TA0CTL = TimerAConfiguration(ACLK, 3);
+				TA0CTL = TimerAConfiguration(ACLK, 1);
 				TA0CCR0 = 8191; // 0.25s
 				TA0CCTL0 |= CCIE;				
 				
