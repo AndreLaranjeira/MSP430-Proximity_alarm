@@ -97,19 +97,27 @@ void main(void) {
 				// distância e, caso elas estejam dentro de uma margem de erro,
 				// entrar no estado Set. Caso contrário, deve-se entrar no
 				// estado Idle.
-
-                SetPort(P1, OUT, 0);    // Liga o LED1.
-                SetPort(P4, OUT, 7);  // Liga o LED2.
 			
 			    average = 0;
 			    ARMING_FAILED = 0;
 
 				for(i=0; i<MEASUREMENT_NUM; i++) {
+
+	                SetPort(P1, OUT, 0);    // Liga o LED1.
+	                SetPort(P4, OUT, 7);  // Liga o LED2.
+
 					MeasureDistance();
 					while(MEASURE_BUSY);
 					measures[i] = distance;
 					average += distance;
-					DelaySeconds(1);
+
+					Delay40Microsseconds(18750);    // Wait 0.75 seconds.
+
+	                ClearPort(P1, OUT, 0);    // Desliga o LED1.
+	                ClearPort(P4, OUT, 7);  // Desliga o LED2.
+
+					Delay40Microsseconds(6250);     // Wait 0.25 seconds.
+
 				}
 				
 				average >>= 2;
