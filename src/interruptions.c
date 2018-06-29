@@ -9,11 +9,8 @@ static uint16_t distance = 0, start = 0, end = 0;
 #pragma vector=PORT2_VECTOR
 __interrupt void P2_ISR(){
 	switch(P2IV){
-		case 0x04:			
-			if(ComparePortEQ(P2, IN, 1, 0)){
-				Debounce();
-				ConfigureArming(); // This will disable interruptions on S1
-			}
+		case 0x04:
+			ConfigureArming(); // This will disable interruptions on S1
 		break;
 		default: break;
 	}
@@ -23,11 +20,8 @@ __interrupt void P2_ISR(){
 #pragma vector=PORT1_VECTOR
 __interrupt void P1_ISR(){
 	switch(P1IV){
-		case 0x02:			
-			if(ComparePortEQ(P1, IN, 1, 0)){
-				Debounce();
-				ConfigureIdle(); // This will disable interruptions for S2
-			}
+		case 0x04:			
+			ConfigureIdle(); // This will disable interruptions for S2
 		break;
 		default: break;
 	}
@@ -36,13 +30,29 @@ __interrupt void P1_ISR(){
 /* TA0 */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TA0_CCR0_ISR(){
-      TogglePort(P1, OUT, 0);
-      TogglePort(P4, OUT, 7);
-      TA0CCTL0 &= ~CCIFG;
+	if(GetState() == Triggered){
+		TogglePort(P1, OUT, 0);
+		TogglePort(P4, OUT, 7);
+		TogglePort(P7, OUT, 0);
+  }
+  else if(GetState() == Arming){
+		SetPort(P1, OUT, 0);
+		SetPort(P4, OUT, 7);  
+  }
+  TA0CCTL0 &= ~CCIFG;
+}
+
+#pragma vector=TIMER0_A1_VECTOR
+__interrupt void TA0_CCRN_ISR(){
+	switch(TA0IV){
+		case 0x02:
+			ClearPort(P1, OUT, 0);
+			ClearPort(P4, OUT, 7);
+	}
 }
 
 /* TA1 */
-#pragma vector = TA1_CCRN_INT
+#pragma vector = TIMER1_A1_VECTOR
 __interrupt void TA1_CCRN_ISR() {
 	switch(TA1IV) {
 		
@@ -66,16 +76,22 @@ __interrupt void TA1_CCRN_ISR() {
 						if(GetMeasureCounter() < MEASURE_SIZE) {
 							SaveMeasure(distance);
 						}
-						// Verify relative error
+						// Verify error
 						else {
-							if(AcceptableMeasures()) ConfigureSet();
-							else ConfigureIdle();
+							if(AcceptableMeasures()) {
+								ConfigureSet();
+							}
+							else {
+								ConfigureIdle();
+							}
 						}
 					}
 					
 					// Set
 					else if(GetState() == Set){
-						if(!AcceptableDistance(distance)) ConfigureTriggered();
+						if(!AcceptableDistance(distance)) {
+							ConfigureTriggered();
+						}
 					}
 					
 					

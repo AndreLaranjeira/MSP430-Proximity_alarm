@@ -33,6 +33,8 @@
 #define ComparePortNE(port, type, pin, value) (((port##type) & (BIT##pin)) != value)
 #define FLLN(x) ((x)-1)
 #define LowPowerMode(number) (__bis_SR_register(LPM##number##_bits))
+#define LowPowerModeIE(number) (__bis_SR_register(LPM##number##_bits+GIE))
+#define LowPowerModeIE_on_exit(number) __bis_SR_register_on_exit(LPM##number##_bits+GIE)
 #define ReadPort(port, type, pin) ((port##type) & (BIT##pin))  
 #define SetPort(port, type, pin) ((port##type) |= (BIT##pin))
 #define TimerAConfiguration(clock, mode) (TACLR | (TASSEL__##clock) | (MC_##mode))

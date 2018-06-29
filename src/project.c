@@ -27,6 +27,10 @@ void ConfigProxSensor(){
 	
 }
 
+void ConfigBuzzer(){
+	SetPort(P7, OUT, 0);
+}
+
 void SendTrigger(void) {
 	SetPort(P1, OUT, 2);
 	ClearPort(P1, OUT, 2);
@@ -40,7 +44,7 @@ void SaveMeasure(uint16_t distance){ // ASSERTIVA: counter adequado
 
 uint8_t AcceptableMeasures(){
 	uint16_t i;
-	average >>= 4;
+	average >>= 2;
 	for(i=0; i<MEASURE_SIZE; i++){
 		if(abs(measures[i]-average) > ACCEPTABLE_ABSOLUTE_ERROR)
 			return 0;
@@ -49,7 +53,6 @@ uint8_t AcceptableMeasures(){
 }
 
 uint8_t AcceptableDistance(uint16_t distance){ // ASSERTIVA: average já foi dividido por 4
-	uint16_t i;
 	if(abs(distance-average) > ACCEPTABLE_ABSOLUTE_ERROR)
 			return 0;
 	return 1;
@@ -60,13 +63,15 @@ void ConfigureIdle(){
 	
 	SetPort(P1, OUT, 0); // LED1 ON
 	ClearPort(P4, OUT, 7); // LED2 OFF
-	SetPort(P2, IE, 1); // Enable interruption for S1
-	ClearPort(P1, IE, 1); // No interruption for S2
+	SetPort(P7, OUT, 0); // Buzzer OFF
+	
+	InterruptEnableS1();
+	InterruptDisableS2();
+	
 	TA0CCTL0 &= ~CCIE;	
+	TA0CCTL1 &= ~CCIE;
 	TA2CCTL0 &= ~CCIE;
-	
-	LowPowerMode(4);
-	
+	 
 }
 
 void ConfigureArming(){
@@ -74,19 +79,26 @@ void ConfigureArming(){
 	
 	SetPort(P1, OUT, 0); // LED1 ON
 	SetPort(P4, OUT, 7); // LED2 ON
-	ClearPort(P2, IE, 1); // No interruption for S1
-	ClearPort(P1, IE, 1); // No interruption for S2
-	TA0CCTL0 &= ~CCIE;
+	SetPort(P7, OUT, 0); // Buzzer OFF
+	
+	InterruptDisableS1();
+	InterruptDisableS2();
 	
 	// Send first trigger
 	counter = 0;
 	average = 0;
 	
-	TA2CTL = TimerAConfiguration(SMCLK, 1);
-	TA2CCR0 = SAMPLE_PERIOD;
-	TA2CCTL0 |= CCIE;
+	// Interruption for LEDs
+	TA0CTL = TimerAConfiguration(ACLK, 1);
+	TA0CCR0 = 32767; // 1s
+	TA0CCR1 = 24575; // 0.75s
+	TA0CCTL0 |= CCIE;
+	TA0CCTL1 |= CCIE;
 	
-	LowPowerMode(1);
+	// Interruption for samples
+	TA2CTL = TimerAConfiguration(ACLK, 1);
+	TA2CCR0 = SAMPLE_PERIOD_ARMING;
+	TA2CCTL0 |= CCIE;
 }
 
 void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
@@ -94,15 +106,18 @@ void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
 	
 	ClearPort(P1, OUT, 0); // LED1 OFF
 	SetPort(P4, OUT, 7); // LED2 ON
-	ClearPort(P2, IE, 1); // No interruption for S1
-	SetPort(P1, IE, 1); // Interruption for S2
-	TA0CCTL0 &= ~CCIE;
+	SetPort(P7, OUT, 0); // Buzzer OFF
 	
+	InterruptDisableS1();
+	InterruptEnableS2();
+	
+	TA0CCTL0 &= ~CCIE;
+	TA0CCTL1 &= ~CCIE;
+	
+	// Interruption for samples
 	TA2CTL = TimerAConfiguration(SMCLK, 1);
 	TA2CCR0 = SAMPLE_PERIOD;
 	TA2CCTL0 |= CCIE;
-	
-	LowPowerMode(1);
 }
 
 void ConfigureTriggered(){
@@ -110,14 +125,18 @@ void ConfigureTriggered(){
 	
 	ClearPort(P1, OUT, 0); // LED1 OFF
 	SetPort(P4, OUT, 7); // LED2 ON
-	ClearPort(P2, IE, 1); // No interruption for S1
-	ClearPort(P1, IE, 1); // No interruption for S2
-	TA2CCTL0 &= ~CCIE;
 	
+	InterruptDisableS1();
+	InterruptEnableS2();
+	
+	TA2CCTL0 &= ~CCIE;
+	TA0CCTL1 &= ~CCIE;
+	
+	// Interruption for LEDs and Buzzer
 	TA0CTL = TimerAConfiguration(ACLK, 1);
-	TA0CCR0 = 32768; // 1s
+	TA0CCR0 = 8191; // 1s
 	TA0CCTL0 |= CCIE;
 	
-	LowPowerMode(3);
+	//UARTSendString("Alerta!");
 	
 }

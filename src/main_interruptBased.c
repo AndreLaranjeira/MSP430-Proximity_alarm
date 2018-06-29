@@ -4,7 +4,7 @@
 #include "../Include/MSP430_shortcuts.h"
 #include "../Include/MSP430_project.h"
 
-void main(void) {
+int main(void) {
 	WDTCTL = WDTPW | WDTHOLD; // Stop watchdog timer.
 	InitializePorts(); // Avoids energy loss to unitialized ports.
 	
@@ -15,8 +15,15 @@ void main(void) {
 	ConfigLED2();
 	ConfigUART();
 	ConfigProxSensor();
+	ConfigBuzzer();
+	
+	__bic_SR_register(CPUOFF);
 	
 	/* Configure Idle state */
 	ConfigureIdle();
+	__enable_interrupt();
 	
+	return 0;
 }
+
+
