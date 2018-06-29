@@ -27,6 +27,7 @@ void main(void) {
 
 	// Local variable declarations:
 	State CurrentState = Idle;
+
 	uint16_t i, measures[4], average;
 
 	WDTCTL = WDTPW | WDTHOLD;	 // stop watchdog timer
@@ -39,8 +40,10 @@ void main(void) {
 		P1.2: Proximity sensor trigger
 		P2.0 (TA1.1): Proximity sensor echo
 		P2.1: Switch 1
+		P3.3: Bluetooth RX
+		P3.4: Bluetooth TX
 		P4.7: LED 2
-		P7.0: Buzzer
+		P8.2: Buzzer
 	*/
 	
 	// Switch configuration:
@@ -55,8 +58,8 @@ void main(void) {
 
 	// Buzzer configuration:
 
-	    SetPort(P7, DIR, 0);
-	    SetPort(P7, OUT, 0);
+	    SetPort(P8, DIR, 2);
+	    SetPort(P8, OUT, 2);
 
     // Configure Timer A0 to control LEDs and buzzer in Triggered state.
 
@@ -75,6 +78,10 @@ void main(void) {
 		TA1CCTL1 = CaptureMode(3);
 		TA1CTL = TimerAConfiguration(SMCLK, 2);
 	
+	// Bluetooth module configuration:
+
+		ConfigUARTModule0(SM_CLK, 104, 1, 0);
+
 	// Enable interruptions:
 
 		__enable_interrupt();
@@ -92,7 +99,7 @@ void main(void) {
 			
 				SetPort(P1, OUT, 0);	// Liga o LED1.
 				ClearPort(P4, OUT, 7);	// Desliga o LED2.
-				SetPort(P7, OUT, 0);  // Desliga o buzzer.
+				SetPort(P8, OUT, 2);  // Desliga o buzzer.
 
 				if(ComparePortEQ(P2, IN, 1, 0)){
 					Debounce();
@@ -165,6 +172,8 @@ void main(void) {
 
 				DelaySeconds(1);
 
+                UARTM0SendString("Alarm set!\n", 11);
+
 				while(CurrentState == Set) {
 
 				    if(ComparePortEQ(P1, IN, 1, 0)){
@@ -204,6 +213,8 @@ void main(void) {
 				
 				// Enviar notificação de bluetooth.
 				
+                UARTM0SendString("Alarm triggered!\n", 17);
+
 				// Espera o botão ser apertado.
 				
 				while(ComparePortNE(P1, IN, 1, 0));
@@ -215,6 +226,10 @@ void main(void) {
 				while(ComparePortEQ(P1, IN, 1, 0));
 				Debounce();
 				
+                // Enviar notificação de bluetooth.
+
+                UARTM0SendString("Alarm reset!\n", 13);
+
 				// Disable timer responsible for the LEDs and buzzer.
 
 				TA0CTL &= ~MC__UP;
@@ -250,7 +265,7 @@ uint8_t AcceptableDistance(uint16_t average, uint16_t distance) {
 __interrupt void TA0_CCR0_ISR() {
       TogglePort(P1, OUT, 0);   // LED 1.
       TogglePort(P4, OUT, 7);   // LED 2.
-      TogglePort(P7, OUT, 0);   // Buzzer.
+      TogglePort(P8, OUT, 2);   // Buzzer.
       TA0CCTL0 &= ~CCIFG;       // Limpa a flag de interrupções.
 }
 
@@ -292,7 +307,6 @@ __interrupt void TA1_CCRN_ISR() {
 
 /* TODO list
  *
- * Add Bluetooth integration.
  * Refactor code.
  * Write comprehensive tutorial for module.
  *
