@@ -64,6 +64,7 @@ int ConfigLED1(void);
 int ConfigLED2(void);
 int ConfigS1(void);
 int ConfigS2(void);
+int ConfigUARTModule0(uint8_t, uint16_t, uint8_t, uint8_t);
 int Debounce(void);
 int DelayMicrosseconds(uint16_t);
 int Delay40Microsseconds(uint16_t);
@@ -86,6 +87,7 @@ int LCDM0SendByte(uint8_t, uint8_t, uint8_t, uint16_t);
 int LCDM0SendNibble(uint8_t, uint8_t, uint8_t);
 int LCDM0Start4BitMode(uint16_t);
 int LCDM0UpdatePositions(uint8_t, uint8_t, uint8_t, uint8_t);
+int UARTM0SendString(char*, uint16_t);
 
 // Functions:
 int ConfigI2CMaster0(uint8_t ADDR, uint8_t clock, uint8_t BR0, uint8_t BR1) {
@@ -246,6 +248,29 @@ int ConfigS2(void) {
 
     return 0;
 
+}
+
+int ConfigUARTModule0(uint8_t clock, uint16_t BRW, uint8_t BRF, uint8_t BRS) {
+
+  SetPort(P3, DIR, 3);    // P3.3 = TX de USCI-A0.
+  SetPort(P3, SEL, 3);
+
+  ClearPort(P3, DIR, 4);  // P3.4 = RX de USCI-A0.
+  SetPort(P3, SEL, 4);
+  
+  UCA0CTL1 |= UCSWRST; // Reset UCA0 module
+  
+  UCA0CTL0 = 0;
+  UCA0CTL1 |= ((clock & 0x03) << 6);
+
+  UCA0BRW = BRW;
+
+  UCA0MCTL = (((BRF & 0x0F) << 4) | ((BRS & 0x07) << 3));
+
+  UCA0CTL1 &= ~UCSWRST;
+
+  return 0;
+  
 }
 
 int Debounce(void) {
@@ -592,6 +617,19 @@ int LCDM0UpdatePositions(uint8_t left, uint8_t right, uint8_t down, uint8_t up) 
 	
 	return 0;
 	
+}
+
+int UARTM0SendString(char *data, uint16_t size) {
+  
+  while(size != 0) {
+    UCA0TXBUF = (*data & 0x7F);
+    while(UCA0STAT & UCBUSY);
+	data++;
+	size--;
+  }
+  
+  return 0;
+  
 }
 
 #endif // MSP430_SHORTCUTS_H_
