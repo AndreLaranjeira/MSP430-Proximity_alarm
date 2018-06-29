@@ -5,7 +5,6 @@
 
 // Macros:
 #define ERROR_VALUE 100
-#define MEASUREMENT_NUM 4
 
 // Enumerations:
 typedef enum{
@@ -28,19 +27,20 @@ void main(void) {
 
 	// Local variable declarations:
 	State CurrentState = Idle;
-	uint16_t i, measures[MEASUREMENT_NUM], average;
+	uint16_t i, measures[4], average;
 
 	WDTCTL = WDTPW | WDTHOLD;	 // stop watchdog timer
 	
 	InitializePorts();	// Avoids energy loss to unitialized ports.
 	
 	/* Port usage:
-		P1.0: LED1,
-		P1.1: S2,
-		P1.2: Proximity sensor trigger,
-		P2.0 (TA1.1): Proximity sensor echo,
-		P2.1: S1,
-		P4.7: LED2	
+		P1.0: LED 1
+		P1.1: Switch 2
+		P1.2: Proximity sensor trigger
+		P2.0 (TA1.1): Proximity sensor echo
+		P2.1: Switch 1
+		P4.7: LED 2
+		P7.0: Buzzer
 	*/
 	
 	// Switch configuration:
@@ -52,6 +52,17 @@ void main(void) {
 	
 		ConfigLED1();
 		ConfigLED2();
+
+	// Buzzer configuration:
+
+	    SetPort(P7, DIR, 0);
+	    SetPort(P7, OUT, 0);
+
+    // Configure Timer A0 to control LEDs and buzzer in Triggered state.
+
+        TA0CTL = TimerAConfiguration(ACLK, 0);  // Timer is on hold.
+        TA0CCR0 = 8191; // f = 4 Hz.
+        TA0CCTL0 |= CCIE;
 	
 	// Proximity sensor configuration:
 	
@@ -81,7 +92,8 @@ void main(void) {
 			
 				SetPort(P1, OUT, 0);	// Liga o LED1.
 				ClearPort(P4, OUT, 7);	// Desliga o LED2.
-			
+				SetPort(P7, OUT, 0);  // Desliga o buzzer.
+
 				if(ComparePortEQ(P2, IN, 1, 0)){
 					Debounce();
 					CurrentState = Arming;
@@ -101,7 +113,7 @@ void main(void) {
 			    average = 0;
 			    ARMING_FAILED = 0;
 
-				for(i=0; i<MEASUREMENT_NUM; i++) {
+				for(i=0; i<4; i++) {
 
 	                SetPort(P1, OUT, 0);    // Liga o LED1.
 	                SetPort(P4, OUT, 7);  // Liga o LED2.
@@ -124,7 +136,7 @@ void main(void) {
 				
 				// Verifica se alguma das medições está fora da margem de erro.
 				
-				for(i=0; i<MEASUREMENT_NUM; i++) {
+				for(i=0; i<4; i++) {
 
 					if(!AcceptableDistance(average, measures[i])){
 					    ARMING_FAILED = 1;
@@ -185,12 +197,12 @@ void main(void) {
 				// acender o LED1 e o LED2 alternadamente. Quando o botão S2
 				// for apertado, deve-se ir para o estado Idle.
 				
+			    // Enable timer responsible for the LEDs and buzzer.
+
+                TA0CTL |= MC__UP;
+                TA0CCTL0 |= CCIE;
 				
-				TA0CTL = TimerAConfiguration(ACLK, 1);
-				TA0CCR0 = 8191; // 0.25s
-				TA0CCTL0 |= CCIE;				
-				
-				// Enviar notificação e ligar o buzzer
+				// Enviar notificação de bluetooth.
 				
 				// Espera o botão ser apertado.
 				
@@ -203,6 +215,9 @@ void main(void) {
 				while(ComparePortEQ(P1, IN, 1, 0));
 				Debounce();
 				
+				// Disable timer responsible for the LEDs and buzzer.
+
+				TA0CTL &= ~MC__UP;
 				TA0CCTL0 &= ~CCIE;
 				
 				break;
@@ -231,6 +246,14 @@ uint8_t AcceptableDistance(uint16_t average, uint16_t distance) {
 }
 
 // ISRs:
+#pragma vector = TA0_CCR0_INT
+__interrupt void TA0_CCR0_ISR() {
+      TogglePort(P1, OUT, 0);   // LED 1.
+      TogglePort(P4, OUT, 7);   // LED 2.
+      TogglePort(P7, OUT, 0);   // Buzzer.
+      TA0CCTL0 &= ~CCIFG;       // Limpa a flag de interrupções.
+}
+
 #pragma vector = TA1_CCRN_INT
 __interrupt void TA1_CCRN_ISR() {
 
@@ -267,10 +290,10 @@ __interrupt void TA1_CCRN_ISR() {
 
 }
 
-
-#pragma vector=TIMER0_A0_VECTOR
-__interrupt void TA0_CCR0_ISR(){
-      TogglePort(P1, OUT, 0);
-      TogglePort(P4, OUT, 7);
-      TA0CCTL0 &= ~CCIFG;
-}
+/* TODO list
+ *
+ * Add Bluetooth integration.
+ * Refactor code.
+ * Write comprehensive tutorial for module.
+ *
+ */
