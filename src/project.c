@@ -33,6 +33,7 @@ void ConfigBuzzer(){
 
 void SendTrigger(void) {
 	SetPort(P1, OUT, 2);
+	DelayMicrosseconds(12);
 	ClearPort(P1, OUT, 2);
 }
 
@@ -72,7 +73,6 @@ void ConfigureIdle(){
 	
 	TA0CCTL0 &= ~CCIE;	
 	TA0CCTL1 &= ~CCIE;
-	TA2CCTL0 &= ~CCIE;
 	 
 }
 
@@ -94,8 +94,8 @@ void ConfigureArming(){
 	
 	// Interruption for LEDs and samples
 	TA0CTL = TimerAConfiguration(ACLK, 1);
-	TA0CCR0 = SAMPLE_PERIOD_ARMING; // 1s
-	TA0CCR1 = SAMPLE_PERIOD_ARMING*0.75; // 0.75s
+	TA0CCR0 = SAMPLE_PERIOD_ARMING; // 0.5s
+	TA0CCR1 = SAMPLE_PERIOD_ARMING*0.75; // 3/4*0.5s
 	TA0CCTL0 |= CCIE;
 	TA0CCTL1 |= CCIE;
 }
@@ -112,13 +112,12 @@ void ConfigureSet(){ // Assertiva TA1 configurado com SMCLK
 	
 	UARTM0SendString("SET\n");
 	
-	TA0CCTL0 &= ~CCIE;
 	TA0CCTL1 &= ~CCIE;
 	
 	// Interruption for samples
-	TA2CTL = TimerAConfiguration(SMCLK, 1);
-	TA2CCR0 = SAMPLE_PERIOD;
-	TA2CCTL0 |= CCIE;
+	TA0CTL = TimerAConfiguration(SMCLK, 1);
+	TA0CCR0 = SAMPLE_PERIOD;
+	TA0CCTL0 |= CCIE;
 }
 
 void ConfigureTriggered(){
@@ -130,7 +129,6 @@ void ConfigureTriggered(){
 	InterruptDisableS1();
 	InterruptEnableS2();
 	
-	TA2CCTL0 &= ~CCIE;
 	TA0CCTL1 &= ~CCIE;
 	
 	// Interruption for LEDs and Buzzer

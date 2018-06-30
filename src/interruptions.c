@@ -30,14 +30,19 @@ __interrupt void P1_ISR(){
 /* TA0 */
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TA0_CCR0_ISR(){
-	if(GetState() == Triggered){
+	State state = GetState();
+	
+	if(state == Triggered){
 		TogglePort(P1, OUT, 0);
 		TogglePort(P4, OUT, 7);
 		TogglePort(P8, OUT, 2);
   }
-  else if(GetState() == Arming){
+  else if(state == Arming){
 		SetPort(P1, OUT, 0);
 		SetPort(P4, OUT, 7);  
+  }
+  else if(state == Set){
+		SendTrigger();
   }
   TA0CCTL0 &= ~CCIFG;
 }
@@ -101,11 +106,4 @@ __interrupt void TA1_CCRN_ISR() {
 		
 		break;
 	}
-}
-
-/* TA2 */
-#pragma vector=TIMER2_A0_VECTOR
-__interrupt void TA2_CCR0_ISR(){
-	SendTrigger();
-	TA2CCTL0 &= ~CCIFG;
 }
