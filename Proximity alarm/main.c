@@ -181,6 +181,7 @@ void main(void) {
 				        CurrentState = Idle;
 				        while(ComparePortEQ(P1, IN, 1, 0));
 				        Debounce();
+						UARTM0SendString("Alarm reset!\n", 13);
 				    }
 
 				    else {
