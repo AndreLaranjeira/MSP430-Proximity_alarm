@@ -305,10 +305,3 @@ __interrupt void TA1_CCRN_ISR() {
 		}
 
 }
-
-/* TODO list
- *
- * Refactor code.
- * Write comprehensive tutorial for module.
- *
- */
