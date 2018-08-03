@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <math.h>
 #include <stdint.h>
-#include "../Include/MSP430_shortcuts.h"
+#include "../inc/MSP430_shortcuts.h"
 
 // Macros:
 #define ERROR_VALUE 100
