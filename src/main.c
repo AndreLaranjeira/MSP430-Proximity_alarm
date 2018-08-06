@@ -1,7 +1,7 @@
 #include <msp430.h>
 #include <math.h>
 #include <stdint.h>
-#include "../Include/MSP430_shortcuts.h"
+#include "../inc/MSP430_shortcuts.h"
 
 // Macros:
 #define ERROR_VALUE 100
@@ -305,10 +305,3 @@ __interrupt void TA1_CCRN_ISR() {
 		}
 
 }
-
-/* TODO list
- *
- * Refactor code.
- * Write comprehensive tutorial for module.
- *
- */
